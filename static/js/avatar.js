@@ -28,8 +28,8 @@ export class Avatar {
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(this.renderer), 0.04).texture;
 
-    this.camera = new THREE.PerspectiveCamera(28, 1, 0.05, 100);
-    this.camera.position.set(0, 1.55, 2.6);
+    this.camera = new THREE.PerspectiveCamera(30, 1, 0.05, 100);
+    this.camera.position.set(0, 1.5, 3.4);
     this.camera.lookAt(0, 1.5, 0);
 
     this._setupLights();
@@ -152,51 +152,172 @@ export class Avatar {
   }
 
   _buildFallback() {
-    const group = new THREE.Group();
-    const skin = new THREE.MeshStandardMaterial({ color: 0xffd7b3, roughness: 0.55, metalness: 0.0 });
-    const hair = new THREE.MeshStandardMaterial({ color: 0x2b1a3a, roughness: 0.5 });
-    const eye = new THREE.MeshStandardMaterial({ color: 0x0c0c14, roughness: 0.2 });
-    const mouth = new THREE.MeshStandardMaterial({ color: 0x6a1f2a, roughness: 0.4 });
+    const skin = new THREE.MeshStandardMaterial({ color: 0xf2c8a8, roughness: 0.6, metalness: 0.0 });
+    const blush = new THREE.MeshStandardMaterial({ color: 0xe79078, roughness: 0.7, transparent: true, opacity: 0.45 });
+    const hair = new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: 0.7, metalness: 0.05 });
+    const sclera = new THREE.MeshStandardMaterial({ color: 0xfafaf6, roughness: 0.25 });
+    const iris = new THREE.MeshStandardMaterial({ color: 0x4a6f8c, roughness: 0.3, metalness: 0.15 });
+    const pupil = new THREE.MeshStandardMaterial({ color: 0x0a0a14, roughness: 0.15 });
+    const highlight = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const lip = new THREE.MeshStandardMaterial({ color: 0xb3525a, roughness: 0.4 });
+    const innerMouth = new THREE.MeshStandardMaterial({ color: 0x320812, roughness: 0.8 });
+    const brow = new THREE.MeshStandardMaterial({ color: 0x2b1a14, roughness: 0.75 });
+    const shirt = new THREE.MeshStandardMaterial({ color: 0x4a3aa0, roughness: 0.7 });
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 48, 48), skin);
-    head.position.y = 1.6;
-    head.scale.set(0.9, 1.05, 0.95);
-    group.add(head);
+    // ── Head group: every facial feature attaches here so the head can
+    //    rotate as one unit and the camera frames it cleanly. ─────────
+    const headGroup = new THREE.Group();
+    headGroup.position.y = 1.55;
 
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.58, 48, 48, 0, Math.PI * 2, 0, Math.PI / 2), hair);
-    cap.position.y = 1.62;
-    cap.scale.set(0.95, 0.85, 1.0);
-    group.add(cap);
+    // Skull — slightly egg-shaped (narrower at the jaw)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 64, 64), skin);
+    head.scale.set(1.0, 1.18, 1.0);
+    headGroup.add(head);
 
-    const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 24, 24), eye);
-    leftEye.position.set(-0.16, 1.66, 0.46);
-    group.add(leftEye);
-    const rightEye = leftEye.clone();
-    rightEye.position.x = 0.16;
-    group.add(rightEye);
+    // Hair: back/top cap
+    const hairCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.42, 64, 64, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      hair,
+    );
+    hairCap.position.set(0, 0.04, -0.02);
+    hairCap.scale.set(1.05, 1.15, 1.05);
+    headGroup.add(hairCap);
 
-    const eyelidL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 24, 24, 0, Math.PI * 2, 0, Math.PI / 2), skin);
-    eyelidL.position.set(-0.16, 1.66, 0.46);
-    eyelidL.rotation.x = -Math.PI / 2;
-    eyelidL.scale.y = 0.001;
-    group.add(eyelidL);
+    // Hair: side fringe (asymmetric — feels less mannequin-y)
+    const fringe = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2),
+      hair,
+    );
+    fringe.position.set(-0.1, 0.3, 0.28);
+    fringe.rotation.set(0.4, 0.0, 0.45);
+    fringe.scale.set(1.3, 0.55, 0.5);
+    headGroup.add(fringe);
+
+    // Ears
+    const earGeom = new THREE.SphereGeometry(0.07, 24, 24);
+    const earL = new THREE.Mesh(earGeom, skin);
+    earL.position.set(-0.4, 0.0, 0);
+    earL.scale.set(0.45, 1.15, 0.7);
+    headGroup.add(earL);
+    const earR = earL.clone();
+    earR.position.x = 0.4;
+    headGroup.add(earR);
+
+    // Eyes — sclera + iris + pupil + specular highlight
+    const makeEye = (side) => {
+      const g = new THREE.Group();
+      g.position.set(side * 0.13, 0.07, 0.345);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.055, 32, 32), sclera);
+      white.scale.set(1.25, 1.0, 0.7);
+      g.add(white);
+      const ir = new THREE.Mesh(new THREE.SphereGeometry(0.028, 24, 24), iris);
+      ir.position.z = 0.04;
+      g.add(ir);
+      const pu = new THREE.Mesh(new THREE.SphereGeometry(0.013, 16, 16), pupil);
+      pu.position.z = 0.055;
+      g.add(pu);
+      const hi = new THREE.Mesh(new THREE.SphereGeometry(0.006, 12, 12), highlight);
+      hi.position.set(side * 0.008, 0.012, 0.062);
+      g.add(hi);
+      return g;
+    };
+    const leftEye = makeEye(-1);
+    const rightEye = makeEye(1);
+    headGroup.add(leftEye, rightEye);
+
+    // Upper eyelids — flat half-shells we squash for blinks
+    const lidGeom = new THREE.SphereGeometry(0.06, 32, 24, 0, Math.PI * 2, 0, Math.PI / 2);
+    const eyelidL = new THREE.Mesh(lidGeom, skin);
+    eyelidL.position.set(-0.13, 0.082, 0.345);
+    eyelidL.rotation.x = Math.PI;
+    eyelidL.scale.set(1.3, 0.001, 0.78);
+    headGroup.add(eyelidL);
     const eyelidR = eyelidL.clone();
-    eyelidR.position.x = 0.16;
-    group.add(eyelidR);
+    eyelidR.position.x = 0.13;
+    headGroup.add(eyelidR);
 
-    const mouthMesh = new THREE.Mesh(new THREE.SphereGeometry(0.12, 24, 24), mouth);
-    mouthMesh.position.set(0, 1.42, 0.5);
-    mouthMesh.scale.set(1.2, 0.15, 0.4);
-    group.add(mouthMesh);
+    // Eyebrows — softly arched
+    const browGeom = new THREE.BoxGeometry(0.12, 0.018, 0.02);
+    const browL = new THREE.Mesh(browGeom, brow);
+    browL.position.set(-0.13, 0.16, 0.36);
+    browL.rotation.z = -0.1;
+    browL.rotation.y = 0.2;
+    headGroup.add(browL);
+    const browR = browL.clone();
+    browR.position.x = 0.13;
+    browR.rotation.z = 0.1;
+    browR.rotation.y = -0.2;
+    headGroup.add(browR);
 
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.55, 1.2, 32), new THREE.MeshStandardMaterial({ color: 0x4a3aa0, roughness: 0.6 }));
-    body.position.y = 0.7;
-    group.add(body);
+    // Nose — bridge + tip
+    const noseBridge = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.038, 0.16, 20), skin);
+    noseBridge.position.set(0, 0.0, 0.36);
+    noseBridge.rotation.x = -0.18;
+    headGroup.add(noseBridge);
+    const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 32, 32), skin);
+    noseTip.position.set(0, -0.08, 0.4);
+    noseTip.scale.set(0.95, 0.85, 0.95);
+    headGroup.add(noseTip);
+
+    // Cheeks — subtle blush dots
+    const cheekGeom = new THREE.SphereGeometry(0.07, 24, 24);
+    const cheekL = new THREE.Mesh(cheekGeom, blush);
+    cheekL.position.set(-0.22, -0.06, 0.3);
+    cheekL.scale.set(1.0, 0.6, 0.4);
+    headGroup.add(cheekL);
+    const cheekR = cheekL.clone();
+    cheekR.position.x = 0.22;
+    headGroup.add(cheekR);
+
+    // Mouth — inner cavity (visible when open) + upper/lower lips
+    const inner = new THREE.Mesh(
+      new THREE.BoxGeometry(0.13, 0.04, 0.04),
+      innerMouth,
+    );
+    inner.position.set(0, -0.2, 0.34);
+    headGroup.add(inner);
+
+    const lipGeom = new THREE.SphereGeometry(0.07, 32, 16);
+    const upperLip = new THREE.Mesh(lipGeom, lip);
+    upperLip.position.set(0, -0.183, 0.365);
+    upperLip.scale.set(1.05, 0.22, 0.32);
+    headGroup.add(upperLip);
+
+    const lowerLip = new THREE.Mesh(lipGeom, lip);
+    lowerLip.position.set(0, -0.218, 0.365);
+    lowerLip.scale.set(0.95, 0.28, 0.36);
+    headGroup.add(lowerLip);
+
+    // Chin shadow indication via a small skin sphere just below mouth
+    const chin = new THREE.Mesh(new THREE.SphereGeometry(0.18, 32, 32), skin);
+    chin.position.set(0, -0.32, 0.18);
+    chin.scale.set(0.85, 0.5, 0.7);
+    headGroup.add(chin);
+
+    // ── Body ────────────────────────────────────────────────────────
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.22, 24), skin);
+    neck.position.y = 1.18;
+
+    const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 24), shirt);
+    shoulders.position.y = 0.98;
+    shoulders.scale.set(1.45, 0.45, 0.85);
+
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.85, 32), shirt);
+    torso.position.y = 0.5;
+
+    const group = new THREE.Group();
+    group.add(headGroup, neck, shoulders, torso);
 
     this.modelRoot = group;
     this.scene.add(group);
 
-    this._fallback = { head, mouthMesh, eyelidL, eyelidR };
+    this._fallback = {
+      headGroup, head,
+      leftEye, rightEye,
+      eyelidL, eyelidR,
+      upperLip, lowerLip, inner,
+      browL, browR,
+    };
     this._lookTarget = new THREE.Vector3(0, 1.55, 0);
   }
 
@@ -246,12 +367,33 @@ export class Avatar {
     // Fallback rig animations.
     if (this._fallback) {
       const f = this._fallback;
-      f.mouthMesh.scale.y = 0.15 + this.lipLevel * 0.65;
-      f.mouthMesh.scale.x = 1.2 - this.lipLevel * 0.25;
-      f.eyelidL.scale.y = Math.max(0.001, blink * 1.2);
-      f.eyelidR.scale.y = Math.max(0.001, blink * 1.2);
-      f.head.rotation.y = Math.sin(this.idle * 0.5) * 0.08;
-      f.head.rotation.x = Math.sin(this.idle * 0.7) * 0.04;
+      const open = this.lipLevel;
+      // Lower lip drops and inner mouth scales open.
+      f.lowerLip.position.y = -0.218 - open * 0.06;
+      f.lowerLip.scale.y = 0.28 + open * 0.15;
+      f.upperLip.position.y = -0.183 + open * 0.005;
+      f.inner.scale.y = 1.0 + open * 4.0;
+      f.inner.scale.x = 1.0 - open * 0.2;
+      // Subtle smile — corners of mouth lift slightly when calm.
+      const smile = 0.05 + (1 - open) * 0.05;
+      f.upperLip.rotation.z = 0;
+      f.lowerLip.rotation.z = 0;
+      // Blinks
+      f.eyelidL.scale.y = Math.max(0.001, blink * 1.3);
+      f.eyelidR.scale.y = Math.max(0.001, blink * 1.3);
+      // Head sway — rotate the whole head group, not just the skull.
+      f.headGroup.rotation.y = Math.sin(this.idle * 0.5) * 0.07;
+      f.headGroup.rotation.x = Math.sin(this.idle * 0.7) * 0.03;
+      // Tiny eye saccades for life.
+      const sx = Math.sin(this.idle * 0.9) * 0.05;
+      const sy = Math.sin(this.idle * 0.6 + 1.3) * 0.03;
+      f.leftEye.rotation.set(sy, sx, 0);
+      f.rightEye.rotation.set(sy, sx, 0);
+      // Brow lift when speaking.
+      f.browL.position.y = 0.16 + open * 0.012;
+      f.browR.position.y = 0.16 + open * 0.012;
+      // Avoid unused warning
+      void smile;
     }
 
     // Subtle head sway on rigged models too.
