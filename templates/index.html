@@ -21,14 +21,10 @@
   </div>
 
   <div id="hud">
-    <div id="status" class="status">Connecting…</div>
+    <div id="status" class="status">Loading…</div>
     <form id="prompt-form" class="prompt">
-      <input id="text-input" type="text" placeholder="Type a prompt and press enter…" autocomplete="off" />
-      <button id="send-btn" type="submit" title="Send prompt">Send</button>
-      <button id="mic-btn" type="button" class="mic" title="Hold to talk">
-        <span class="mic-dot"></span>
-        <span class="mic-label">Talk</span>
-      </button>
+      <input id="text-input" type="text" placeholder="Type a prompt and press enter…" autocomplete="off" autofocus />
+      <button id="send-btn" type="submit">Send</button>
     </form>
     <div id="transcript" class="transcript"></div>
   </div>

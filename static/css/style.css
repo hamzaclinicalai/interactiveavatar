@@ -115,39 +115,6 @@ html, body {
 .prompt button:hover { transform: translateY(-1px); }
 .prompt button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.mic {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: var(--fg) !important;
-}
-
-.mic.recording {
-  background: linear-gradient(135deg, var(--danger), #ff8a4a) !important;
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-.mic-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--muted);
-  box-shadow: 0 0 0 0 currentColor;
-}
-
-.mic.recording .mic-dot {
-  background: white;
-  animation: pulseDot 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 85, 119, 0.5); }
-  50% { box-shadow: 0 0 0 12px rgba(255, 85, 119, 0); }
-}
-@keyframes pulseDot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
 .transcript {
   max-width: min(720px, 92vw);
   font-size: 13px;
