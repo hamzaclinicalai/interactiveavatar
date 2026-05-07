@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Interactive Avatar</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="avatar-canvas"></canvas>
+    <div id="caption" class="caption"></div>
+  </div>
+
+  <div id="hud">
+    <div id="status" class="status">Connecting…</div>
+    <form id="prompt-form" class="prompt">
+      <input id="text-input" type="text" placeholder="Type a prompt and press enter…" autocomplete="off" />
+      <button id="send-btn" type="submit" title="Send prompt">Send</button>
+      <button id="mic-btn" type="button" class="mic" title="Hold to talk">
+        <span class="mic-dot"></span>
+        <span class="mic-label">Talk</span>
+      </button>
+    </form>
+    <div id="transcript" class="transcript"></div>
+  </div>
+
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
